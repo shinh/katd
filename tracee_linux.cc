@@ -49,6 +49,8 @@ public:
       return SYSCALL_LINK;
     case 265:  // linkat
       return SYSCALL_LINKAT;
+    case 6:  // lstat
+      return SYSCALL_LSTAT;
     case 83:  // mkdir
       return SYSCALL_MKDIR;
     case 258:  // mkdirat

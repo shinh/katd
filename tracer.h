@@ -1,6 +1,8 @@
 #ifndef KATD_TRACER_H_
 #define KATD_TRACER_H_
 
+#include <string>
+
 class Tracee;
 
 class Tracer {
@@ -15,6 +17,7 @@ public:
 private:
   bool wait();
   void handleSyscall();
+  bool peekStringArgument(int arg_index, std::string* path) const;
 
   Tracee* tracee_;
   char** argv_;
