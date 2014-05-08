@@ -1,5 +1,6 @@
 #include "tracee.h"
 
+#include <assert.h>
 #include <stdint.h>
 
 #include "syscalls.h"
@@ -95,6 +96,29 @@ public:
       return SYSCALL_VFORK;
     default:
       return UNINTERESTING_SYSCALL;
+    }
+  }
+
+  virtual int64_t getReturnValue() const {
+    return registers_.rax;
+  }
+
+  virtual int64_t getArgument(int n) const {
+    switch (n) {
+    case 0:
+      return registers_.rdi;
+    case 1:
+      return registers_.rsi;
+    case 2:
+      return registers_.rdx;
+    case 3:
+      return registers_.r10;
+    case 4:
+      return registers_.r8;
+    case 5:
+      return registers_.r9;
+    default:
+      assert(0);
     }
   }
 

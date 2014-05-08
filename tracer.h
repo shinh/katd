@@ -14,6 +14,7 @@ public:
 
 private:
   bool wait();
+  void handleSyscall();
 
   Tracee* tracee_;
   char** argv_;

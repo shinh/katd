@@ -2,6 +2,7 @@
 
 #include <errno.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,9 +51,7 @@ void Tracer::run() {
     PTRACE(SYSCALL, pid_, 0, 0);
     if (!wait())
       return;
-
-    PTRACE(GETREGS, pid_, 0, tracee_->getRegisterBuffer());
-    fprintf(stderr, "stop %s\n", getSyscallName(tracee_->getSyscall()));
+    handleSyscall();
   }
 }
 
@@ -61,4 +60,22 @@ bool Tracer::wait() {
   if (!WIFSTOPPED(status_))
     return false;
   return true;
+}
+
+void Tracer::handleSyscall() {
+  PTRACE(GETREGS, pid_, 0, tracee_->getRegisterBuffer());
+  int64_t retval = tracee_->getReturnValue();
+  Syscall syscall = tracee_->getSyscall();
+
+  fprintf(stderr, "stop %s %ld %ld %ld => %ld\n",
+          getSyscallName(syscall),
+          tracee_->getArgument(0),
+          tracee_->getArgument(1),
+          tracee_->getArgument(2),
+          retval);
+  // Do not care the syscall entrace and uninteresting syscalls.
+  if (retval == -ENOSYS || syscall == UNINTERESTING_SYSCALL)
+    return;
+
+
 }

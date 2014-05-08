@@ -1,6 +1,8 @@
 #ifndef KATD_TRACEE_H_
 #define KATD_TRACEE_H_
 
+#include <stdint.h>
+
 #include "syscalls.h"
 
 class Tracee {
@@ -10,6 +12,8 @@ public:
 
   virtual void* getRegisterBuffer() = 0;
   virtual Syscall getSyscall() const = 0;
+  virtual int64_t getReturnValue() const = 0;
+  virtual int64_t getArgument(int n) const = 0;
 };
 
 #endif  // KATD_TRACEE_H_
