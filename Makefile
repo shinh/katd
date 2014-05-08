@@ -1,13 +1,13 @@
 EXES=libkatd.a katd
 
-CXXFLAGS=$(GCCFLAGS) -W -Werror -fPIC
+CXXFLAGS=-g -Wall -W -Werror -fPIC -MMD -O
 
 all: $(EXES)
 
 katd: main.o libkatd.a
 	$(CXX) $^ -o $@ -g
 
-libkatd.a: tracer.o tracee_linux.o
+libkatd.a: syscalls.o tracer.o tracee_linux.o
 	ar crus $@ $^
 
 clean:

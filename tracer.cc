@@ -10,6 +10,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "syscalls.h"
 #include "tracee.h"
 
 #define PCHECK(c)                                                       \
@@ -51,7 +52,7 @@ void Tracer::run() {
       return;
 
     PTRACE(GETREGS, pid_, 0, tracee_->getRegisterBuffer());
-    fprintf(stderr, "stop %d\n", tracee_->getSyscall());
+    fprintf(stderr, "stop %s\n", getSyscallName(tracee_->getSyscall()));
   }
 }
 
