@@ -20,8 +20,6 @@ public:
   void addHandler(Handler* handler);
   void run();
 
-  int status() const { return status_; }
-
   void set_follow_children(bool f) { follow_children_ = f; }
 
 private:
@@ -29,6 +27,7 @@ private:
     ProcessState();
     std::vector<std::string> args;
     int status;
+    bool execve_handled;
   };
 
   bool wait();
@@ -37,12 +36,14 @@ private:
   void sendEvent(const Event& event);
 
   void handleOpen(Event* ev);
+  void handleClone(int pid);
+  void handleFork(int pid);
+  void handleExecve(Event* ev);
 
   Tracee* tracee_;
   char** argv_;
   int root_pid_;
   int pid_;
-  int status_;
   std::vector<Handler*> handlers_;
   bool follow_children_;
   std::set<int> pids_;
