@@ -1,6 +1,7 @@
 #ifndef KATD_TRACER_H_
 #define KATD_TRACER_H_
 
+#include <map>
 #include <set>
 #include <string>
 #include <vector>
@@ -24,6 +25,12 @@ public:
   void set_follow_children(bool f) { follow_children_ = f; }
 
 private:
+  struct ProcessState {
+    ProcessState();
+    std::vector<std::string> args;
+    int status;
+  };
+
   bool wait();
   void handleSyscall();
   bool peekStringArgument(int arg_index, std::string* path) const;
@@ -33,11 +40,13 @@ private:
 
   Tracee* tracee_;
   char** argv_;
+  int root_pid_;
   int pid_;
   int status_;
   std::vector<Handler*> handlers_;
   bool follow_children_;
   std::set<int> pids_;
+  std::map<int, ProcessState> states_;
 };
 
 }  // namespace katd

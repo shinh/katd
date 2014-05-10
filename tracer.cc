@@ -53,12 +53,16 @@ Tracer::Tracer(char** argv)
 Tracer::~Tracer() {
 }
 
+Tracer::ProcessState::ProcessState()
+  : status(0) {
+}
+
 void Tracer::addHandler(Handler* handler) {
   handlers_.push_back(handler);
 }
 
 void Tracer::run() {
-  pid_ = fork();
+  root_pid_ = pid_ = fork();
   PCHECK(pid_ >= 0);
   if (pid_ == 0) {
     PTRACE(TRACEME, 0, 0, 0);
@@ -66,6 +70,9 @@ void Tracer::run() {
   }
 
   pids_.insert(pid_);
+  for (char** p = argv_; *p; p++)
+    states_[pid_].args.push_back(*p);
+
   if (!wait()) {
     fprintf(stderr, "failed to run the binary: %s\n", argv_[0]);
     abort();
@@ -86,16 +93,15 @@ void Tracer::run() {
 }
 
 bool Tracer::wait() {
-  int pid = ::wait(&status_);
-  PCHECK(pid >= 0);
+  pid_ = ::wait(&status_);
+  PCHECK(pid_ >= 0);
   if (!WIFSTOPPED(status_)) {
-    pids_.erase(pid);
+    pids_.erase(pid_);
     if (pids_.empty())
       return false;
     return wait();
   }
 
-  pid_ = pid;
   int sig = WSTOPSIG(status_);
   if (sig != SIGTRAP &&
       sig != SIGSTOP && sig != SIGTSTP && sig != SIGTTIN && sig != SIGTTOU) {
