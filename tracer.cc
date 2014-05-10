@@ -88,15 +88,25 @@ void Tracer::run() {
 bool Tracer::wait() {
   int pid = ::wait(&status_);
   PCHECK(pid >= 0);
-  int sig = WSTOPSIG(status_) & 0xff;
-  if (!WIFSTOPPED(status_) ||
-      (sig != SIGTRAP && sig != SIGCHLD && sig != SIGSTOP)) {
+  if (!WIFSTOPPED(status_)) {
     pids_.erase(pid);
     if (pids_.empty())
       return false;
     return wait();
   }
+
   pid_ = pid;
+  int sig = WSTOPSIG(status_);
+  if (sig != SIGTRAP &&
+      sig != SIGSTOP && sig != SIGTSTP && sig != SIGTTIN && sig != SIGTTOU) {
+    siginfo_t siginfo;
+    if (ptrace(PTRACE_GETSIGINFO, pid_, 0, &siginfo) >= 0) {
+      // This is signal-delivery-stop. Deliver the signal to the tracee.
+      PTRACE(SYSCALL, pid_, 0, sig);
+    }
+    return wait();
+  }
+
   return true;
 }
 
