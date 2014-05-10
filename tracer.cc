@@ -83,6 +83,8 @@ bool Tracer::wait() {
   PCHECK(pid >= 0);
   if (!WIFSTOPPED(status_))
     return false;
+  if (WSTOPSIG(status_) != SIGTRAP)
+    return false;
   return true;
 }
 
@@ -95,8 +97,8 @@ void Tracer::handleSyscall() {
   if (-4096 < retval && retval < 0)
     ev.error = -retval;
 
-  fprintf(stderr, "stop %s %ld %ld %ld => %ld\n",
-          getSyscallName(ev.syscall),
+  fprintf(stderr, "stop %s(%d) %ld %ld %ld => %ld\n",
+          getSyscallName(ev.syscall), ev.syscall,
           tracee_->getArgument(0),
           tracee_->getArgument(1),
           tracee_->getArgument(2),
