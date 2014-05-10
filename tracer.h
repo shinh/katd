@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+class Event;
 class Handler;
 class Tracee;
 
@@ -21,6 +22,9 @@ private:
   bool wait();
   void handleSyscall();
   bool peekStringArgument(int arg_index, std::string* path) const;
+  void sendEvent(const Event& event);
+
+  void handleOpen(Event* ev);
 
   Tracee* tracee_;
   char** argv_;
