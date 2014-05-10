@@ -19,7 +19,10 @@ int main(int argc, char* argv[]) {
 
   katd::Tracer tracer(argv + 1);
   tracer.set_follow_children(follow_children);
+
   katd::DumpHandler dump_handler;
+  dump_handler.set_show_pid(follow_children);
+
   tracer.addHandler(&dump_handler);
   tracer.run();
 }

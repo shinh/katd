@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 
+#include <sstream>
 #include <string>
 
 #include "event.h"
@@ -13,13 +14,15 @@ using namespace std;
 namespace katd {
 
 void DumpHandler::handleEvent(const Event& event) {
-  string output;
-  output += "<>![]()"[event.type];
-  output += ' ';
-  output += getSyscallName(event.syscall);
-  output += ' ';
-  output += event.path;
-  fprintf(stderr, "%s\n", output.c_str());
+  ostringstream oss;
+  if (show_pid_)
+    oss << event.pid << ' ';
+  oss << "<>![]()"[event.type];
+  oss << ' ';
+  oss << getSyscallName(event.syscall);
+  oss << ' ';
+  oss << event.path;
+  fprintf(stderr, "%s\n", oss.str().c_str());
 }
 
 }  // namespace katd

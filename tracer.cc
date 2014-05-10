@@ -131,6 +131,7 @@ bool Tracer::wait() {
 void Tracer::handleSyscall() {
   PTRACE(GETREGS, pid_, 0, tracee_->getRegisterBuffer());
   Event ev;
+  ev.pid = pid_;
   ev.syscall = tracee_->getSyscall();
   int64_t retval = tracee_->getReturnValue();
   ev.error = 0;

@@ -23,6 +23,7 @@ struct Event {
   Syscall syscall;
   EventType type;
   int error;
+  int pid;
 };
 
 }  // namespace katd
