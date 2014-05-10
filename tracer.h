@@ -20,6 +20,8 @@ public:
 
   int status() const { return status_; }
 
+  void set_follow_children(bool f) { follow_children_ = f; }
+
 private:
   bool wait();
   void handleSyscall();
@@ -33,6 +35,7 @@ private:
   int pid_;
   int status_;
   std::vector<Handler*> handlers_;
+  bool follow_children_;
 };
 
 }  // namespace katd

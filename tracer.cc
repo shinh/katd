@@ -45,7 +45,8 @@ namespace katd {
 Tracer::Tracer(char** argv)
   : argv_(argv),
     pid_(-1),
-    status_(-1) {
+    status_(-1),
+    follow_children_(false) {
   tracee_ = Tracee::create(argv_[0]);
 }
 
