@@ -78,7 +78,8 @@ void Tracer::run() {
 }
 
 bool Tracer::wait() {
-  PCHECK(waitpid(pid_, &status_, 0) >= 0);
+  int pid = ::wait(&status_);
+  PCHECK(pid >= 0);
   if (!WIFSTOPPED(status_))
     return false;
   return true;
