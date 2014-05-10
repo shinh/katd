@@ -7,7 +7,7 @@ all: $(EXES)
 katd: main.o libkatd.a
 	$(CXX) $^ -o $@ -g
 
-libkatd.a: syscalls.o tracer.o tracee_linux.o
+libkatd.a: dump_handler.o syscalls.o tracer.o tracee_linux.o
 	ar crus $@ $^
 
 clean:
