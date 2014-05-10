@@ -50,8 +50,6 @@ Tracer::Tracer(char** argv)
 }
 
 Tracer::~Tracer() {
-  for (size_t i = 0; i < handlers_.size(); i++)
-    delete handlers_[i];
 }
 
 void Tracer::addHandler(Handler* handler) {

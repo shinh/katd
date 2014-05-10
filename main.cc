@@ -10,6 +10,7 @@ int main(int argc, char* argv[]) {
   }
 
   katd::Tracer tracer(argv + 1);
-  tracer.addHandler(new katd::DumpHandler);
+  katd::DumpHandler dump_handler;
+  tracer.addHandler(&dump_handler);
   tracer.run();
 }
