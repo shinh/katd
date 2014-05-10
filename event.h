@@ -20,6 +20,7 @@ struct Event {
   std::string path;
   Syscall syscall;
   EventType type;
+  int error;
 };
 
 #endif  // KATD_EVENT_H_

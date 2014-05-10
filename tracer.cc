@@ -87,8 +87,11 @@ bool Tracer::wait() {
 void Tracer::handleSyscall() {
   PTRACE(GETREGS, pid_, 0, tracee_->getRegisterBuffer());
   Event ev;
-  int64_t retval = tracee_->getReturnValue();
   ev.syscall = tracee_->getSyscall();
+  int64_t retval = tracee_->getReturnValue();
+  ev.error = 0;
+  if (-4096 < retval && retval < 0)
+    ev.error = -retval;
 
   fprintf(stderr, "stop %s %ld %ld %ld => %ld\n",
           getSyscallName(ev.syscall),
@@ -188,7 +191,7 @@ void Tracer::handleSyscall() {
   }
 
   if (ev.type != INVALID_EVENT_TYPE) {
-    if (-4096 < retval && retval < 0) {
+    if (ev.error) {
       switch (ev.type) {
       case READ_CONTENT:
       case READ_METADATA:
@@ -241,7 +244,7 @@ void Tracer::handleOpen(Event* ev) {
     ev->type = WRITE_CONTENT;
     break;
   case O_RDWR:
-    ev->type = READ_CONTENT;
+    ev->type = ev->error ? READ_FAILURE : READ_CONTENT;
     sendEvent(*ev);
     ev->type = WRITE_CONTENT;
     break;
