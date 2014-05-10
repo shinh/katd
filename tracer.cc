@@ -33,8 +33,8 @@ using namespace std;
   ({                                                            \
     long v;                                                     \
     if ((v = ptrace(PTRACE_ ## req, pid, addr, data)) == -1) {  \
-      fprintf(stderr, "ptrace(%s) failed: %s\n",                \
-              #req, strerror(errno));                           \
+      fprintf(stderr, "ptrace(%s, %d) failed: %s\n",            \
+              #req, pid, strerror(errno));                      \
       abort();                                                  \
     }                                                           \
     v;                                                          \
@@ -65,15 +65,22 @@ void Tracer::run() {
     PCHECK(execvp(argv_[0], argv_) == 0);
   }
 
+  pids_.insert(pid_);
   if (!wait()) {
     fprintf(stderr, "failed to run the binary: %s\n", argv_[0]);
     abort();
   }
 
-  for (;;) {
+  if (follow_children_) {
+    PTRACE(SETOPTIONS, pid_, 0,
+           PTRACE_O_TRACECLONE | PTRACE_O_TRACEFORK | PTRACE_O_TRACEVFORK);
+  }
+
+  while (!pids_.empty()) {
     PTRACE(SYSCALL, pid_, 0, 0);
-    if (!wait())
-      return;
+    if (!wait()) {
+      continue;
+    }
     handleSyscall();
   }
 }
@@ -81,10 +88,15 @@ void Tracer::run() {
 bool Tracer::wait() {
   int pid = ::wait(&status_);
   PCHECK(pid >= 0);
-  if (!WIFSTOPPED(status_))
-    return false;
-  if (WSTOPSIG(status_) != SIGTRAP)
-    return false;
+  int sig = WSTOPSIG(status_) & 0xff;
+  if (!WIFSTOPPED(status_) ||
+      (sig != SIGTRAP && sig != SIGCHLD && sig != SIGSTOP)) {
+    pids_.erase(pid);
+    if (pids_.empty())
+      return false;
+    return wait();
+  }
+  pid_ = pid;
   return true;
 }
 

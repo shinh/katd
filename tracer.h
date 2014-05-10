@@ -1,6 +1,7 @@
 #ifndef KATD_TRACER_H_
 #define KATD_TRACER_H_
 
+#include <set>
 #include <string>
 #include <vector>
 
@@ -36,6 +37,7 @@ private:
   int status_;
   std::vector<Handler*> handlers_;
   bool follow_children_;
+  std::set<int> pids_;
 };
 
 }  // namespace katd
