@@ -9,7 +9,7 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  Tracer tracer(argv + 1);
-  tracer.addHandler(new DumpHandler);
+  katd::Tracer tracer(argv + 1);
+  tracer.addHandler(new katd::DumpHandler);
   tracer.run();
 }

@@ -5,6 +5,8 @@
 
 #include "syscalls.h"
 
+namespace katd {
+
 class Tracee {
 public:
   static Tracee* create(const char* filename);
@@ -15,5 +17,7 @@ public:
   virtual int64_t getReturnValue() const = 0;
   virtual int64_t getArgument(int n) const = 0;
 };
+
+}  // namespace katd
 
 #endif  // KATD_TRACEE_H_

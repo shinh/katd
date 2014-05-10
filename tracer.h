@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+namespace katd {
+
 class Event;
 class Handler;
 class Tracee;
@@ -32,5 +34,7 @@ private:
   int status_;
   std::vector<Handler*> handlers_;
 };
+
+}  // namespace katd
 
 #endif  // KATD_TRACER_H_

@@ -1,6 +1,8 @@
 #ifndef KATD_HANDLER_H_
 #define KATD_HANDLER_H_
 
+namespace katd {
+
 class Event;
 
 class Handler {
@@ -9,5 +11,7 @@ public:
 
   virtual void handleEvent(const Event& event) = 0;
 };
+
+}  // namespace katd
 
 #endif  // KATD_HANDLER_H_

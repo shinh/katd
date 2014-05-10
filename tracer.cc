@@ -40,6 +40,8 @@ using namespace std;
     v;                                                          \
   })
 
+namespace katd {
+
 Tracer::Tracer(char** argv)
   : argv_(argv),
     pid_(-1),
@@ -253,3 +255,5 @@ void Tracer::handleOpen(Event* ev) {
     ev->type = READ_CONTENT;
   }
 }
+
+}  // namespace katd

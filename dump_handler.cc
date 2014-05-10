@@ -10,6 +10,8 @@
 
 using namespace std;
 
+namespace katd {
+
 void DumpHandler::handleEvent(const Event& event) {
   string output;
   output += "<>![]()"[event.type];
@@ -19,3 +21,5 @@ void DumpHandler::handleEvent(const Event& event) {
   output += event.path;
   fprintf(stderr, "%s\n", output.c_str());
 }
+
+}  // namespace katd

@@ -2,6 +2,8 @@
 
 #include <assert.h>
 
+namespace katd {
+
 static const char* SYSCALL_NAMES[] = {
   "???",
 #define DEFINE_SYSCALL(x, p) #x,
@@ -24,3 +26,5 @@ int getPathArgIndex(Syscall s) {
     assert(0);
   }
 }
+
+}  // namespace katd

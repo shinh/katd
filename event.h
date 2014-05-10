@@ -5,6 +5,8 @@
 
 #include <string>
 
+namespace katd {
+
 enum EventType {
   INVALID_EVENT_TYPE = -1,
   READ_CONTENT,
@@ -22,5 +24,7 @@ struct Event {
   EventType type;
   int error;
 };
+
+}  // namespace katd
 
 #endif  // KATD_EVENT_H_

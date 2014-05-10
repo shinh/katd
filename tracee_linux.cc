@@ -5,6 +5,8 @@
 
 #include "syscalls.h"
 
+namespace katd {
+
 class Tracee_x86_64 : public Tracee {
 public:
   virtual void* getRegisterBuffer() {
@@ -142,3 +144,5 @@ Tracee* Tracee::create(const char* /*filename*/) {
 }
 
 Tracee::~Tracee() {}
+
+}  // namespace katd
