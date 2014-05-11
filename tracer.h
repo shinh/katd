@@ -29,6 +29,7 @@ private:
     int status;
     bool execve_handled;
     std::string cwd;
+    std::map<int, std::string> fds;
   };
 
   void attach();
@@ -38,7 +39,7 @@ private:
   bool peekPathArgument(int arg_index, int at_fd, std::string* path);
   void sendEvent(const Event& event);
 
-  void handleOpen(Event* ev);
+  void handleOpen(Event* ev, int fd);
   void handleClone(int pid);
   void handleFork(int pid);
   void handleExecve(Event* ev);

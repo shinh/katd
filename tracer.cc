@@ -16,6 +16,7 @@
 #include <unistd.h>
 
 #include <string>
+#include <utility>
 
 #include "event.h"
 #include "handler.h"
@@ -87,7 +88,7 @@ void Tracer::run() {
   }
 }
 
-static string normalizeCwd(string cwd) {
+static string normalizeDir(string cwd) {
   while (!cwd.empty() && cwd[cwd.size() - 1] == '/')
     cwd.resize(cwd.size() - 1);
   cwd.push_back('/');
@@ -106,7 +107,7 @@ void Tracer::attach() {
   ProcessState* state = &states_[pid_];
   char cwd_buf[PATH_MAX + 1];
   PCHECK(getcwd(cwd_buf, PATH_MAX + 1));
-  state->cwd = normalizeCwd(cwd_buf);
+  state->cwd = normalizeDir(cwd_buf);
   for (char** p = argv_; *p; p++)
     state->args.push_back(*p);
 
@@ -247,7 +248,7 @@ void Tracer::handleSyscall() {
   case SYSCALL_CHDIR:
     ev.type = READ_METADATA;
     if (!ev.error)
-      states_[pid_].cwd = normalizeCwd(ev.path);
+      states_[pid_].cwd = normalizeDir(ev.path);
     break;
 
   case SYSCALL_CHROOT:
@@ -271,7 +272,7 @@ void Tracer::handleSyscall() {
 
   case SYSCALL_OPEN:
   case SYSCALL_OPENAT:
-    handleOpen(&ev);
+    handleOpen(&ev, retval);
     break;
 
   case SYSCALL_RENAME:
@@ -332,6 +333,14 @@ bool Tracer::peekPathArgument(int arg, int at_fd, string* path) {
   if ((*path)[0] != '/') {
     if (at_fd == AT_FDCWD) {
       *path = states_[pid_].cwd + *path;
+    } else {
+      const ProcessState& state = states_[pid_];
+      map<int, string>::const_iterator found = state.fds.find(at_fd);
+      if (found != state.fds.end()) {
+        *path = normalizeDir(found->second) + *path;
+      } else {
+        *path = "<bad fd>/" + *path;
+      }
     }
   }
   return true;
@@ -342,8 +351,12 @@ void Tracer::sendEvent(const Event& event) {
     handlers_[i]->handleEvent(event);
 }
 
-void Tracer::handleOpen(Event* ev) {
+void Tracer::handleOpen(Event* ev, int fd) {
   assert(ev->syscall == SYSCALL_OPEN || ev->syscall == SYSCALL_OPENAT);
+  if (fd >= 0) {
+    states_[pid_].fds[fd] = ev->path;
+  }
+
   int flag_arg_index = ev->syscall == SYSCALL_OPEN ? 1 : 2;
   int64_t flag = tracee_->getArgument(flag_arg_index);
   switch (flag & O_ACCMODE) {
