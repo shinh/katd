@@ -26,13 +26,15 @@ using namespace std;
 
 #define CHECK(c)                                                        \
   if (!(c)) {                                                           \
-    fprintf(stderr, "CHECK (%s) failed\n", #c);                         \
+    fprintf(stderr, "%s:%d: CHECK (%s) failed\n",                       \
+            __FILE__, __LINE__, #c);                                    \
     abort();                                                            \
   }
 
 #define PCHECK(c)                                                       \
   if (!(c)) {                                                           \
-    fprintf(stderr, "CHECK (%s) failed: %s\n", #c, strerror(errno));    \
+    fprintf(stderr, "%s:%d: CHECK (%s) failed: %s\n",                   \
+            __FILE__, __LINE__, #c, strerror(errno));                   \
     abort();                                                            \
   }
 
@@ -40,8 +42,8 @@ using namespace std;
   ({                                                            \
     long v;                                                     \
     if ((v = ptrace(PTRACE_ ## req, pid, addr, data)) == -1) {  \
-      fprintf(stderr, "ptrace(%s, %d) failed: %s\n",            \
-              #req, pid, strerror(errno));                      \
+      fprintf(stderr, "%s:%d: ptrace(%s, %d) failed: %s\n",     \
+              __FILE__, __LINE__, #req, pid, strerror(errno));  \
       abort();                                                  \
     }                                                           \
     v;                                                          \
