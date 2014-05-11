@@ -28,11 +28,14 @@ private:
     std::vector<std::string> args;
     int status;
     bool execve_handled;
+    std::string cwd;
   };
 
+  void attach();
   bool wait();
   void handleSyscall();
   bool peekStringArgument(int arg_index, std::string* path) const;
+  bool peekPathArgument(int arg_index, std::string* path);
   void sendEvent(const Event& event);
 
   void handleOpen(Event* ev);

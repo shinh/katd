@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -68,21 +69,7 @@ void Tracer::addHandler(Handler* handler) {
 }
 
 void Tracer::run() {
-  root_pid_ = pid_ = fork();
-  PCHECK(pid_ >= 0);
-  if (pid_ == 0) {
-    PTRACE(TRACEME, 0, 0, 0);
-    PCHECK(execvp(argv_[0], argv_) == 0);
-  }
-
-  pids_.insert(pid_);
-  for (char** p = argv_; *p; p++)
-    states_[pid_].args.push_back(*p);
-
-  if (!wait()) {
-    fprintf(stderr, "failed to run the binary: %s\n", argv_[0]);
-    abort();
-  }
+  attach();
 
   if (follow_children_) {
     PTRACE(SETOPTIONS, pid_, 0,
@@ -95,6 +82,35 @@ void Tracer::run() {
       continue;
     }
     handleSyscall();
+  }
+}
+
+static string normalizeCwd(string cwd) {
+  while (!cwd.empty() && cwd[cwd.size() - 1] == '/')
+    cwd.resize(cwd.size() - 1);
+  cwd.push_back('/');
+  return cwd;
+}
+
+void Tracer::attach() {
+  root_pid_ = pid_ = fork();
+  PCHECK(pid_ >= 0);
+  if (pid_ == 0) {
+    PTRACE(TRACEME, 0, 0, 0);
+    PCHECK(execvp(argv_[0], argv_) == 0);
+  }
+
+  pids_.insert(pid_);
+  ProcessState* state = &states_[pid_];
+  char cwd_buf[PATH_MAX + 1];
+  PCHECK(getcwd(cwd_buf, PATH_MAX + 1));
+  state->cwd = normalizeCwd(cwd_buf);
+  for (char** p = argv_; *p; p++)
+    state->args.push_back(*p);
+
+  if (!wait()) {
+    fprintf(stderr, "failed to run the binary: %s\n", argv_[0]);
+    abort();
   }
 }
 
@@ -152,7 +168,7 @@ void Tracer::handleSyscall() {
 
   int path_arg_index = getPathArgIndex(ev.syscall);
   if (path_arg_index >= 0) {
-    peekStringArgument(path_arg_index, &ev.path);
+    peekPathArgument(path_arg_index, &ev.path);
     fprintf(stderr, "%s %s\n", getSyscallName(ev.syscall), ev.path.c_str());
   }
 
@@ -199,7 +215,11 @@ void Tracer::handleSyscall() {
     break;
 
   case SYSCALL_CHDIR:
+    ev.type = READ_METADATA;
+    if (!ev.error)
+      states_[pid_].cwd = normalizeCwd(ev.path);
     break;
+
   case SYSCALL_CHROOT:
     break;
   case SYSCALL_CLONE:
@@ -276,6 +296,15 @@ bool Tracer::peekStringArgument(int arg, string* path) const {
   }
 }
 
+bool Tracer::peekPathArgument(int arg, string* path) {
+  if (!peekStringArgument(arg, path))
+    return false;
+  if ((*path)[0] != '/') {
+    *path = states_[pid_].cwd + *path;
+  }
+  return true;
+}
+
 void Tracer::sendEvent(const Event& event) {
   for (size_t i = 0; i < handlers_.size(); i++)
     handlers_[i]->handleEvent(event);
@@ -312,6 +341,7 @@ void Tracer::handleFork(int pid) {
     return;
   CHECK(pids_.insert(pid).second);
   states_[pid].args = states_[pid_].args;
+  states_[pid].cwd = states_[pid_].cwd;
 }
 
 void Tracer::handleExecve(Event* ev) {
@@ -339,7 +369,7 @@ void Tracer::handleRename(Event* ev) {
   ev->type = WRITE_CONTENT;
   ev->path.clear();
   int64_t newpath_arg_index = ev->syscall == SYSCALL_RENAME ? 1 : 2;
-  peekStringArgument(newpath_arg_index, &ev->path);
+  peekPathArgument(newpath_arg_index, &ev->path);
 }
 
 void Tracer::handleLink(Event* ev) {
@@ -349,7 +379,7 @@ void Tracer::handleLink(Event* ev) {
   ev->type = WRITE_CONTENT;
   ev->path.clear();
   int64_t newpath_arg_index = ev->syscall == SYSCALL_LINK ? 1 : 3;
-  peekStringArgument(newpath_arg_index, &ev->path);
+  peekPathArgument(newpath_arg_index, &ev->path);
 }
 
 }  // namespace katd
