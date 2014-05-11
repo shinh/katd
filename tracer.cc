@@ -215,8 +215,8 @@ void Tracer::handleSyscall() {
     break;
 
   case SYSCALL_LINK:
-    break;
   case SYSCALL_LINKAT:
+    handleLink(&ev);
     break;
 
   case SYSCALL_OPEN:
@@ -339,6 +339,16 @@ void Tracer::handleRename(Event* ev) {
   ev->type = WRITE_CONTENT;
   ev->path.clear();
   int64_t newpath_arg_index = ev->syscall == SYSCALL_RENAME ? 1 : 2;
+  peekStringArgument(newpath_arg_index, &ev->path);
+}
+
+void Tracer::handleLink(Event* ev) {
+  assert(ev->syscall == SYSCALL_LINK || ev->syscall == SYSCALL_LINKAT);
+  ev->type = ev->error ? READ_FAILURE : READ_METADATA;
+  sendEvent(*ev);
+  ev->type = WRITE_CONTENT;
+  ev->path.clear();
+  int64_t newpath_arg_index = ev->syscall == SYSCALL_LINK ? 1 : 3;
   peekStringArgument(newpath_arg_index, &ev->path);
 }
 
