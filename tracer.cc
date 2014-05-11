@@ -186,7 +186,16 @@ void Tracer::handleSyscall() {
   case SYSCALL_MKDIRAT:
   case SYSCALL_MKNOD:
   case SYSCALL_MKNODAT:
+  case SYSCALL_SYMLINK:
+  case SYSCALL_SYMLINKAT:
+  case SYSCALL_TRUNCATE:
     ev.type = WRITE_CONTENT;
+    break;
+
+  case SYSCALL_RMDIR:
+  case SYSCALL_UNLINK:
+  case SYSCALL_UNLINKAT:
+    ev.type = REMOVE_CONTENT;
     break;
 
   case SYSCALL_CHDIR:
@@ -218,19 +227,6 @@ void Tracer::handleSyscall() {
   case SYSCALL_RENAME:
     break;
   case SYSCALL_RENAMEAT:
-    break;
-  case SYSCALL_RMDIR:
-    break;
-
-  case SYSCALL_SYMLINK:
-    break;
-  case SYSCALL_SYMLINKAT:
-    break;
-  case SYSCALL_TRUNCATE:
-    break;
-  case SYSCALL_UNLINK:
-    break;
-  case SYSCALL_UNLINKAT:
     break;
 
   case SYSCALL_USELIB:
