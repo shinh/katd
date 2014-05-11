@@ -35,7 +35,7 @@ private:
   bool wait();
   void handleSyscall();
   bool peekStringArgument(int arg_index, std::string* path) const;
-  bool peekPathArgument(int arg_index, std::string* path);
+  bool peekPathArgument(int arg_index, int at_fd, std::string* path);
   void sendEvent(const Event& event);
 
   void handleOpen(Event* ev);

@@ -168,9 +168,37 @@ void Tracer::handleSyscall() {
       ev.syscall == UNINTERESTING_SYSCALL)
     return;
 
+  int at_fd = AT_FDCWD;
+  int at_fd_arg_index = 0;
+  switch (ev.syscall) {
+  case SYSCALL_SYMLINKAT:
+    at_fd_arg_index = 1;
+    goto peek_at_fd;
+
+  case SYSCALL_FACCESSAT:
+  case SYSCALL_FCHMODAT:
+  case SYSCALL_FCHOWNAT:
+  case SYSCALL_FSTATAT:
+  case SYSCALL_FUTIMESAT:
+  case SYSCALL_LINKAT:
+  case SYSCALL_MKDIRAT:
+  case SYSCALL_MKNODAT:
+  case SYSCALL_OPENAT:
+  case SYSCALL_READLINKAT:
+  case SYSCALL_RENAMEAT:
+  case SYSCALL_UNLINKAT:
+  case SYSCALL_UTIMENSAT:
+  peek_at_fd:
+    at_fd = tracee_->getArgument(at_fd_arg_index);
+    break;
+
+  default:
+    break;
+  }
+
   int path_arg_index = getPathArgIndex(ev.syscall);
   if (path_arg_index >= 0) {
-    peekPathArgument(path_arg_index, &ev.path);
+    peekPathArgument(path_arg_index, at_fd, &ev.path);
     fprintf(stderr, "%s %s\n", getSyscallName(ev.syscall), ev.path.c_str());
   }
 
@@ -298,11 +326,13 @@ bool Tracer::peekStringArgument(int arg, string* path) const {
   }
 }
 
-bool Tracer::peekPathArgument(int arg, string* path) {
+bool Tracer::peekPathArgument(int arg, int at_fd, string* path) {
   if (!peekStringArgument(arg, path))
     return false;
   if ((*path)[0] != '/') {
-    *path = states_[pid_].cwd + *path;
+    if (at_fd == AT_FDCWD) {
+      *path = states_[pid_].cwd + *path;
+    }
   }
   return true;
 }
@@ -371,7 +401,7 @@ void Tracer::handleRename(Event* ev) {
   ev->type = WRITE_CONTENT;
   ev->path.clear();
   int64_t newpath_arg_index = ev->syscall == SYSCALL_RENAME ? 1 : 2;
-  peekPathArgument(newpath_arg_index, &ev->path);
+  peekPathArgument(newpath_arg_index, AT_FDCWD, &ev->path);
 }
 
 void Tracer::handleLink(Event* ev) {
@@ -381,7 +411,7 @@ void Tracer::handleLink(Event* ev) {
   ev->type = WRITE_CONTENT;
   ev->path.clear();
   int64_t newpath_arg_index = ev->syscall == SYSCALL_LINK ? 1 : 3;
-  peekPathArgument(newpath_arg_index, &ev->path);
+  peekPathArgument(newpath_arg_index, AT_FDCWD, &ev->path);
 }
 
 }  // namespace katd
