@@ -225,8 +225,8 @@ void Tracer::handleSyscall() {
     break;
 
   case SYSCALL_RENAME:
-    break;
   case SYSCALL_RENAMEAT:
+    handleRename(&ev);
     break;
 
   case SYSCALL_USELIB:
@@ -241,9 +241,9 @@ void Tracer::handleSyscall() {
       switch (ev.type) {
       case READ_CONTENT:
       case READ_METADATA:
+      case REMOVE_CONTENT:
         ev.type = READ_FAILURE;
         break;
-      case REMOVE_CONTENT:
       case WRITE_CONTENT:
       case WRITE_METADATA:
         ev.type = WRITE_FAILURE;
@@ -330,6 +330,16 @@ void Tracer::handleExecve(Event* ev) {
     ev->type = READ_CONTENT;
     state->execve_handled = true;
   }
+}
+
+void Tracer::handleRename(Event* ev) {
+  assert(ev->syscall == SYSCALL_RENAME || ev->syscall == SYSCALL_RENAMEAT);
+  ev->type = ev->error ? READ_FAILURE : REMOVE_CONTENT;
+  sendEvent(*ev);
+  ev->type = WRITE_CONTENT;
+  ev->path.clear();
+  int64_t newpath_arg_index = ev->syscall == SYSCALL_RENAME ? 1 : 2;
+  peekStringArgument(newpath_arg_index, &ev->path);
 }
 
 }  // namespace katd

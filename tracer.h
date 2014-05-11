@@ -39,6 +39,7 @@ private:
   void handleClone(int pid);
   void handleFork(int pid);
   void handleExecve(Event* ev);
+  void handleRename(Event* ev);
 
   Tracee* tracee_;
   char** argv_;
