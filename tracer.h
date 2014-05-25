@@ -8,7 +8,7 @@
 
 namespace katd {
 
-class Event;
+struct Event;
 class Handler;
 class Tracee;
 

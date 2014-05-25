@@ -3,7 +3,7 @@
 
 namespace katd {
 
-class Event;
+struct Event;
 
 class Handler {
 public:
