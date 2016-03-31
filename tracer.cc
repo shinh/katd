@@ -157,12 +157,14 @@ void Tracer::handleSyscall() {
   if (-4096 < retval && retval < 0)
     ev.error = -retval;
 
+#if 0
   fprintf(stderr, "stop %s(%d) %ld %ld %ld => %ld\n",
           getSyscallName(ev.syscall), ev.syscall,
           tracee_->getArgument(0),
           tracee_->getArgument(1),
           tracee_->getArgument(2),
           retval);
+#endif
   // Do not care the syscall entrace and uninteresting syscalls.
   // However, we need to check the arguments of execve at its entrance.
   if ((retval == -ENOSYS && ev.syscall != SYSCALL_EXECVE) ||
@@ -200,7 +202,7 @@ void Tracer::handleSyscall() {
   int path_arg_index = getPathArgIndex(ev.syscall);
   if (path_arg_index >= 0) {
     peekPathArgument(path_arg_index, at_fd, &ev.path);
-    fprintf(stderr, "%s %s\n", getSyscallName(ev.syscall), ev.path.c_str());
+    //fprintf(stderr, "%s %s\n", getSyscallName(ev.syscall), ev.path.c_str());
   }
 
   ev.type = INVALID_EVENT_TYPE;
