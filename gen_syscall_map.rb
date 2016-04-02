@@ -16,6 +16,7 @@ File.readlines(unistd).each do |line|
   end
 end
 
+syscall_nums = []
 File.readlines('syscalls.tab').each do |line|
   if line =~ /^DEFINE_SYSCALL\((\w+),/
     s = $1.downcase
@@ -37,7 +38,12 @@ File.readlines('syscalls.tab').each do |line|
 
     nums.each do |n, ss|
       puts "case #{n}:  // #{ss}"
+      syscall_nums << n
     end
     puts "  return SYSCALL_#{s.upcase};"
   end
+end
+
+syscall_nums.each do |n|
+  puts "    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), #{n}, 0) >= 0);"
 end

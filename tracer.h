@@ -33,6 +33,7 @@ private:
   };
 
   void attach();
+  void setupSeccomp();
   bool wait();
   void handleSyscall();
   bool peekStringArgument(int arg_index, std::string* path) const;
@@ -54,6 +55,7 @@ private:
   bool follow_children_;
   std::set<int> pids_;
   std::map<int, ProcessState> states_;
+  bool is_in_syscall_;
 };
 
 }  // namespace katd

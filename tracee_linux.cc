@@ -1,8 +1,12 @@
 #include "tracee.h"
 
 #include <assert.h>
+#ifdef USE_SECCOMP
+#include <seccomp.h>
+#endif
 #include <stdint.h>
 
+#include "log.h"
 #include "syscalls.h"
 
 namespace katd {
@@ -124,6 +128,59 @@ public:
     default:
       assert(0);
     }
+  }
+
+  virtual bool setupSeccomp() const {
+#ifdef USE_SECCOMP
+    scmp_filter_ctx sctx = seccomp_init(SCMP_ACT_ALLOW);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 21, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 163, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 80, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 90, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 92, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 161, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 56, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 85, 0) >= 0);
+    // TODO: Catch execve.
+    //PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 59, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 269, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 268, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 260, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 57, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 262, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 261, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 94, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 86, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 265, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 6, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 83, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 258, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 133, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 259, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 2, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 257, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 89, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 267, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 82, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 264, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 84, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 4, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 137, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 88, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 266, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 76, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 87, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 263, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 134, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 132, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 235, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 280, 0) >= 0);
+    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 58, 0) >= 0);
+    PCHECK(seccomp_load(sctx) >= 0);
+    return true;
+#else
+    return false;
+#endif
   }
 
 private:

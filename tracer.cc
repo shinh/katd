@@ -11,6 +11,7 @@
 #include <string.h>
 #include <sys/ptrace.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -20,24 +21,11 @@
 
 #include "event.h"
 #include "handler.h"
+#include "log.h"
 #include "syscalls.h"
 #include "tracee.h"
 
 using namespace std;
-
-#define CHECK(c)                                                        \
-  if (!(c)) {                                                           \
-    fprintf(stderr, "%s:%d: CHECK (%s) failed\n",                       \
-            __FILE__, __LINE__, #c);                                    \
-    abort();                                                            \
-  }
-
-#define PCHECK(c)                                                       \
-  if (!(c)) {                                                           \
-    fprintf(stderr, "%s:%d: CHECK (%s) failed: %s\n",                   \
-            __FILE__, __LINE__, #c, strerror(errno));                   \
-    abort();                                                            \
-  }
 
 #define PTRACE(req, pid, addr, data)                            \
   ({                                                            \
@@ -55,7 +43,8 @@ namespace katd {
 Tracer::Tracer(char** argv)
   : argv_(argv),
     pid_(-1),
-    follow_children_(false) {
+    follow_children_(false),
+    is_in_syscall_(false) {
   tracee_ = Tracee::create(argv_[0]);
 }
 
@@ -74,13 +63,24 @@ void Tracer::addHandler(Handler* handler) {
 void Tracer::run() {
   attach();
 
+  int opts = 0;
+#ifdef USE_SECCOMP
+  opts |= PTRACE_O_TRACESECCOMP;
+#endif
   if (follow_children_) {
-    PTRACE(SETOPTIONS, pid_, 0,
-           PTRACE_O_TRACECLONE | PTRACE_O_TRACEFORK | PTRACE_O_TRACEVFORK);
+    opts |= PTRACE_O_TRACECLONE | PTRACE_O_TRACEFORK | PTRACE_O_TRACEVFORK;
   }
+  PTRACE(SETOPTIONS, pid_, 0, opts);
 
   while (!pids_.empty()) {
-    PTRACE(SYSCALL, pid_, 0, 0);
+#ifdef USE_SECCOMP
+      if (is_in_syscall_)
+        PTRACE(SYSCALL, pid_, 0, 0);
+      else
+        PTRACE(CONT, pid_, 0, 0);
+#else
+      PTRACE(SYSCALL, pid_, 0, 0);
+#endif
     if (!wait()) {
       continue;
     }
@@ -100,6 +100,9 @@ void Tracer::attach() {
   PCHECK(pid_ >= 0);
   if (pid_ == 0) {
     PTRACE(TRACEME, 0, 0, 0);
+#ifdef USE_SECCOMP
+    PCHECK(tracee_->setupSeccomp());
+#endif
     PCHECK(execvp(argv_[0], argv_) == 0);
   }
 
@@ -125,6 +128,12 @@ bool Tracer::wait() {
   std::map<int, ProcessState>::iterator found = states_.find(pid_);
   if (found != states_.end())
     found->second.status = status;
+
+#ifdef USE_SECCOMP
+  if ((status >> 8) == (SIGTRAP | (PTRACE_EVENT_SECCOMP << 8))) {
+    return true;
+  }
+#endif
 
   if (!WIFSTOPPED(status)) {
     pids_.erase(pid_);
@@ -165,9 +174,11 @@ void Tracer::handleSyscall() {
           tracee_->getArgument(2),
           retval);
 #endif
+
+  is_in_syscall_ = (retval == -ENOSYS);
   // Do not care the syscall entrace and uninteresting syscalls.
   // However, we need to check the arguments of execve at its entrance.
-  if ((retval == -ENOSYS && ev.syscall != SYSCALL_EXECVE) ||
+  if ((is_in_syscall_ && ev.syscall != SYSCALL_EXECVE) ||
       ev.syscall == UNINTERESTING_SYSCALL)
     return;
 

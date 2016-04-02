@@ -16,6 +16,7 @@ public:
   virtual Syscall getSyscall() const = 0;
   virtual int64_t getReturnValue() const = 0;
   virtual int64_t getArgument(int n) const = 0;
+  virtual bool setupSeccomp() const { return false; }
 };
 
 }  // namespace katd
