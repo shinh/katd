@@ -1,3 +1,4 @@
+# TODO: Some syscalls won't be caught.
 #USE_SECCOMP := 1
 
 EXES := libkatd.a katd

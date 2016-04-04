@@ -133,49 +133,65 @@ public:
   virtual bool setupSeccomp() const {
 #ifdef USE_SECCOMP
     scmp_filter_ctx sctx = seccomp_init(SCMP_ACT_ALLOW);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 21, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 163, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 80, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 90, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 92, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 161, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 56, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 85, 0) >= 0);
-    // TODO: Catch execve.
-    //PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 59, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 269, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 268, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 260, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 57, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 262, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 261, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 94, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 86, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 265, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 6, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 83, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 258, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 133, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 259, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 2, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 257, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 89, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 267, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 82, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 264, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 84, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 4, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 137, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 88, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 266, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 76, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 87, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 263, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 134, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 132, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 235, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 280, 0) >= 0);
-    PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), 58, 0) >= 0);
+    static const char* kSyscallNames[] = {
+      "access",
+      "acct",
+      "chdir",
+      "chmod",
+      "chown",
+      "chroot",
+      "clone",
+      "creat",
+      // TODO: Catch execve.
+      //"execve",
+      "faccessat",
+      "fchmodat",
+      "fchownat",
+      "fork",
+      "newfstatat",
+      "futimesat",
+      "lchown",
+      "link",
+      "linkat",
+      "lstat",
+      "mkdir",
+      "mkdirat",
+      "mknod",
+      "mknodat",
+      "open",
+      "openat",
+      "readlink",
+      "readlinkat",
+      "rename",
+      "renameat",
+      "rmdir",
+      "stat",
+      "statfs",
+      "symlink",
+      "symlinkat",
+      "truncate",
+      "unlink",
+      "unlinkat",
+      "uselib",
+      "utime",
+      "utimes",
+      "utimensat",
+      "vfork",
+      0,
+    };
+    for (const char** sys = kSyscallNames; *sys; sys++) {
+      int num = seccomp_syscall_resolve_name_arch(AUDIT_ARCH_X86_64, *sys);
+      PCHECK(num > 0);
+      PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), num, 0) >= 0);
+    }
+    PCHECK(seccomp_arch_add(sctx, AUDIT_ARCH_I386) >= 0);
+    for (const char** sys = kSyscallNames; *sys; sys++) {
+      int num = seccomp_syscall_resolve_name_arch(AUDIT_ARCH_I386, *sys);
+      // TODO: 32bit support is utterly broken.
+      if (num < 0)
+        continue;
+      PCHECK(seccomp_rule_add(sctx, SCMP_ACT_TRACE(42), num, 0) >= 0);
+    }
     PCHECK(seccomp_load(sctx) >= 0);
     return true;
 #else
